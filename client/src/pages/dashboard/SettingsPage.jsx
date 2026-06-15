@@ -11,12 +11,95 @@ import {
   Activity,
   CheckCircle,
   Save,
+  Users,
+  UserPlus,
+  Plus,
+  User,
+  Power,
 } from 'lucide-react';
 
 export default function SettingsPage() {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState('school');
   
+  // Users Management State
+  const [usersList, setUsersList] = useState([]);
+  const [studentsList, setStudentsList] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userForm, setUserForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: '',
+    studentProfile: '',
+    phone: '',
+  });
+
+  useEffect(() => {
+    if (activeTab === 'users') {
+      fetchUsers();
+      fetchStudents();
+    }
+  }, [activeTab]);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get('/users');
+      if (res.data.success) {
+        setUsersList(res.data.data);
+      }
+    } catch (e) {
+      toast.error('Failed to load user accounts');
+    }
+  };
+
+  const fetchStudents = async () => {
+    try {
+      const res = await axios.get('/students?status=active');
+      if (res.data.success) {
+        setStudentsList(res.data.data);
+      }
+    } catch (e) {
+      toast.error('Failed to load active student profiles');
+    }
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      const res = await axios.post('/users', userForm);
+      if (res.data.success) {
+        toast.success(res.data.message || 'User created successfully');
+        setUserForm({
+          name: '',
+          email: '',
+          password: '',
+          role: '',
+          studentProfile: '',
+          phone: '',
+        });
+        fetchUsers();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to create user account');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleToggleUserStatus = async (id, currentStatus) => {
+    try {
+      const res = await axios.put(`/users/${id}`, { isActive: !currentStatus });
+      if (res.data.success) {
+        toast.success(`User account status updated`);
+        fetchUsers();
+      }
+    } catch (err) {
+      toast.error('Failed to update user status');
+    }
+  };
+
   // School Settings State
   const [schoolInfo, setSchoolInfo] = useState({
     name: 'VidyaERP Academy',
@@ -93,6 +176,7 @@ export default function SettingsPage() {
         {[
           { key: 'school', label: 'School Profile', icon: Building },
           { key: 'gateway', label: 'Payment Gateways', icon: CreditCard },
+          { key: 'users', label: 'User Accounts', icon: Users },
           { key: 'security', label: 'Security & Access', icon: ShieldAlert },
           { key: 'system', label: 'Environment & Audits', icon: Server },
         ].map(tab => (
@@ -197,6 +281,192 @@ export default function SettingsPage() {
             </button>
           </div>
         </form>
+      )}
+
+      {/* USER ACCOUNTS TAB */}
+      {activeTab === 'users' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Create User Form */}
+            <form onSubmit={handleCreateUser} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4 h-fit lg:col-span-1">
+              <h3 className="text-lg font-bold text-gray-800 border-b pb-2 flex items-center gap-1.5">
+                <UserPlus className="w-5 h-5 text-indigo-600" /> Create User Account
+              </h3>
+              
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="E.g. Rajesh Kumar"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm bg-gray-50/50 text-gray-950 focus:outline-indigo-600"
+                    value={userForm.name}
+                    onChange={e => setUserForm({ ...userForm, name: e.target.value })}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="E.g. rajesh@vidyaerp.com"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm bg-gray-50/50 text-gray-950 focus:outline-indigo-600"
+                    value={userForm.email}
+                    onChange={e => setUserForm({ ...userForm, email: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Password</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="••••••••"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm bg-gray-50/50 text-gray-950 focus:outline-indigo-600"
+                    value={userForm.password}
+                    onChange={e => setUserForm({ ...userForm, password: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Phone (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="E.g. +91 9988877766"
+                    className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm bg-gray-50/50 text-gray-950 focus:outline-indigo-600"
+                    value={userForm.phone}
+                    onChange={e => setUserForm({ ...userForm, phone: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Role Type</label>
+                  <select
+                    required
+                    className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm bg-gray-50/50 text-gray-950 focus:outline-indigo-600"
+                    value={userForm.role}
+                    onChange={e => setUserForm({ ...userForm, role: e.target.value, studentProfile: '' })}
+                  >
+                    <option value="">Select Role</option>
+                    <option value="principal">Principal</option>
+                    <option value="vice_principal">Vice Principal</option>
+                    <option value="it_admin">IT Admin</option>
+                    <option value="admissions_officer">Admissions Officer</option>
+                    <option value="accounts_officer">Accounts Officer</option>
+                    <option value="cashier">Cashier</option>
+                    <option value="hr_manager">HR Manager</option>
+                    <option value="class_teacher">Class Teacher</option>
+                    <option value="subject_teacher">Subject Teacher</option>
+                    <option value="exam_controller">Exam Controller</option>
+                    <option value="hostel_warden">Hostel Warden</option>
+                    <option value="asst_hostel_warden">Assistant Hostel Warden</option>
+                    <option value="medical_officer">Medical Officer</option>
+                    <option value="transport_manager">Transport Manager</option>
+                    <option value="librarian">Librarian</option>
+                    <option value="student">Student Portal</option>
+                  </select>
+                </div>
+
+                {userForm.role === 'student' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">Link Student Profile</label>
+                    <select
+                      required
+                      className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm bg-gray-50/50 text-gray-950 focus:outline-indigo-600"
+                      value={userForm.studentProfile}
+                      onChange={e => setUserForm({ ...userForm, studentProfile: e.target.value })}
+                    >
+                      <option value="">Select Student Profile</option>
+                      {studentsList.map(s => (
+                        <option key={s._id} value={s._id}>
+                          {s.name} ({s.admissionNumber})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full mt-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm"
+              >
+                <Plus className="w-4 h-4" />
+                {isSubmitting ? 'Creating...' : 'Create Account'}
+              </button>
+            </form>
+
+            {/* Users List Table */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4 lg:col-span-2">
+              <h3 className="text-lg font-bold text-gray-800 border-b pb-2 flex items-center gap-1.5">
+                <Users className="w-5 h-5 text-indigo-600" /> Active System Logins
+              </h3>
+              
+              <div className="overflow-x-auto max-h-[500px]">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 text-2xs font-bold uppercase text-gray-500 border-b border-gray-200">
+                      <th className="px-4 py-3">User</th>
+                      <th className="px-4 py-3">Role</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 text-xs text-gray-750">
+                    {usersList.map((u) => (
+                      <tr key={u._id} className="hover:bg-gray-50/50">
+                        <td className="px-4 py-3">
+                          <div className="font-semibold text-gray-800">{u.name}</div>
+                          <div className="text-2xs text-gray-400">{u.email}</div>
+                          {u.studentProfile && (
+                            <div className="text-[10px] text-indigo-600 font-medium mt-0.5">
+                              Linked: {u.studentProfile.name || 'Student'} ({u.studentProfile.admissionNumber})
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 capitalize">
+                          <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold text-[10px]">
+                            {u.role.replace('_', ' ')}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                            u.isActive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                          }`}>
+                            {u.isActive ? 'Active' : 'Suspended'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => handleToggleUserStatus(u._id, u.isActive)}
+                            className={`p-1.5 rounded-lg border transition ${
+                              u.isActive
+                                ? 'border-red-200 text-red-600 hover:bg-red-50'
+                                : 'border-green-200 text-green-600 hover:bg-green-50'
+                            }`}
+                            title={u.isActive ? 'Suspend User' : 'Activate User'}
+                          >
+                            <Power className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {usersList.length === 0 && (
+                      <tr>
+                        <td colSpan="4" className="text-center py-8 text-gray-400">
+                          No user accounts loaded.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* GATEWAY CONFIG */}

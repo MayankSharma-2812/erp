@@ -6,6 +6,7 @@ const authorize = require('../middleware/rbac');
 const router = express.Router();
 
 router.get('/', protect, authorize('students', 'read'), userController.getUsers);
+router.post('/', protect, authorize('system_settings', 'write'), userController.createUser);
 router.put('/:id', protect, authorize('students', 'write'), userController.updateUser);
 
 module.exports = router;
