@@ -114,7 +114,7 @@ const Topbar = ({ toggleSidebar }) => {
         >
           <Menu className="h-5 w-5" />
         </button>
-        <span className="text-sm font-semibold text-gray-700 tracking-wide">
+        <span className="text-xs md:text-sm font-semibold text-gray-700 tracking-wide truncate max-w-[120px] sm:max-w-none">
           {breadcrumb || 'Overview'}
         </span>
       </div>

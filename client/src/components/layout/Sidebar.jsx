@@ -6,7 +6,7 @@ import { logoutApi } from '../../api/auth.api';
 import * as Icons from 'lucide-react';
 import { toast } from 'sonner';
 
-const Sidebar = ({ collapsed, toggleCollapse }) => {
+const Sidebar = ({ collapsed, toggleCollapse, mobileOpen, closeMobile }) => {
   const { user, clearAuth } = useAuthStore();
   const navigate = useNavigate();
 
@@ -26,11 +26,15 @@ const Sidebar = ({ collapsed, toggleCollapse }) => {
     }
   };
 
+  // On mobile, show labels if the drawer is open.
+  const showFullMenu = !collapsed || mobileOpen;
+
   return (
     <aside
-      className={`h-screen bg-gray-50 border-r border-gray-200 flex flex-col justify-between transition-all duration-300 z-40 fixed left-0 top-0 ${
-        collapsed ? 'w-16' : 'w-60'
-      }`}
+      className={`h-screen bg-gray-50 border-r border-gray-200 flex flex-col justify-between transition-all duration-300 z-40 fixed left-0 top-0 
+        ${mobileOpen ? 'translate-x-0 w-60' : '-translate-x-full md:translate-x-0'}
+        ${collapsed ? 'md:w-16' : 'md:w-60'}
+      `}
     >
       {/* Top: Logo section */}
       <div>
@@ -39,7 +43,7 @@ const Sidebar = ({ collapsed, toggleCollapse }) => {
             <div className="p-2 rounded-lg bg-indigo-600 text-white flex-shrink-0">
               <Icons.GraduationCap className="h-6 w-6" />
             </div>
-            {!collapsed && (
+            {showFullMenu && (
               <span className="font-bold text-lg text-gray-900 tracking-tight whitespace-nowrap animate-in fade-in duration-300">
                 VidyaERP
               </span>
@@ -55,17 +59,18 @@ const Sidebar = ({ collapsed, toggleCollapse }) => {
               <NavLink
                 key={item.key}
                 to={item.path}
+                onClick={closeMobile}
                 className={({ isActive }) =>
                   `flex items-center rounded-lg px-3 py-2.5 text-xs font-semibold tracking-wide transition-all ${
                     isActive
                       ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600 pl-2'
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                  } ${collapsed ? 'justify-center' : 'space-x-3'}`
+                  } ${collapsed ? 'md:justify-center' : 'space-x-3'}`
                 }
                 title={collapsed ? item.label : undefined}
               >
                 <IconComponent className="h-5 w-5 flex-shrink-0" />
-                {!collapsed && (
+                {showFullMenu && (
                   <span className="truncate whitespace-nowrap">{item.label}</span>
                 )}
               </NavLink>
@@ -79,7 +84,7 @@ const Sidebar = ({ collapsed, toggleCollapse }) => {
         {/* Toggle Collapse Button */}
         <button
           onClick={toggleCollapse}
-          className="w-full flex items-center justify-center rounded-lg py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+          className="w-full hidden md:flex items-center justify-center rounded-lg py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors"
           title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
         >
           {collapsed ? (
@@ -96,12 +101,12 @@ const Sidebar = ({ collapsed, toggleCollapse }) => {
         <button
           onClick={handleLogout}
           className={`w-full flex items-center rounded-lg px-3 py-2 text-xs font-semibold transition-colors text-red-600 hover:bg-red-50 ${
-            collapsed ? 'justify-center' : 'space-x-3'
+            collapsed ? 'md:justify-center' : 'space-x-3'
           }`}
           title={collapsed ? 'Log Out' : undefined}
         >
           <Icons.LogOut className="h-5 w-5 flex-shrink-0" />
-          {!collapsed && <span>Log Out</span>}
+          {showFullMenu && <span>Log Out</span>}
         </button>
       </div>
     </aside>
