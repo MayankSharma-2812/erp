@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/api/v1/:path*",
-      "destination": "https://api-erp.rankschool.in/api/v1/:path*"
+      "destination": "https://vidyaerp-api.onrender.com/api/v1/:path*"
     },
     {
       "source": "/uploads/:path*",
-      "destination": "https://api-erp.rankschool.in/uploads/:path*"
+      "destination": "https://vidyaerp-api.onrender.com/uploads/:path*"
     }
   ],
   "routes": [
