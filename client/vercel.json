@@ -1,0 +1,21 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/v1/:path*",
+      "destination": "https://api-erp.YOURDOMAIN.com/api/v1/:path*"
+    },
+    {
+      "source": "/uploads/:path*",
+      "destination": "https://api-erp.YOURDOMAIN.com/uploads/:path*"
+    }
+  ],
+  "routes": [
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/[^.]*",
+      "dest": "/index.html"
+    }
+  ]
+}
