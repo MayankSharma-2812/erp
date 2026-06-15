@@ -1,0 +1,18 @@
+{
+  "name": "vidyaerp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "VidyaERP — CBSE Boarding School ERP System",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev:server": "pnpm --filter vidyaerp-server dev",
+    "dev:client": "pnpm --filter vidyaerp-client dev",
+    "seed": "node server/src/seed.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
