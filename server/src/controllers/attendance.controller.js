@@ -220,9 +220,48 @@ const getConsecutiveAbsences = async (req, res, next) => {
   }
 };
 
+const getMyStudentAttendance = async (req, res, next) => {
+  try {
+    const studentId = req.user.studentProfile;
+    if (!studentId) {
+      return res.status(400).json({ success: false, message: 'No student profile linked to this account' });
+    }
+
+    const records = await AttendanceRecord.find({
+      student: studentId,
+      period: null,
+      subject: null,
+    }).sort({ date: -1 }).limit(90);
+
+    let present = 0, absent = 0, late = 0, leave = 0, holiday = 0, total = 0;
+    records.forEach(r => {
+      total++;
+      if (r.status === 'present') present++;
+      else if (r.status === 'absent') absent++;
+      else if (r.status === 'late') late++;
+      else if (r.status === 'leave') leave++;
+      else if (r.status === 'holiday') holiday++;
+    });
+
+    const activeDays = total - holiday;
+    const attendanceRate = activeDays > 0 ? parseFloat(((present + late) / activeDays * 100).toFixed(1)) : 100;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        stats: { total, present, absent, late, leave, holiday, attendanceRate },
+        records: records.map(r => ({ date: r.date, status: r.status })),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   markAttendance,
   getAttendance,
   getStats,
   getConsecutiveAbsences,
+  getMyStudentAttendance,
 };

@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../../store/authStore';
+import { useNavigate } from 'react-router-dom';
+import api from '../../api/axios';
 import { format } from 'date-fns';
 import {
   ClipboardCheck,
@@ -11,7 +13,9 @@ import {
   Clock,
   ArrowUpRight,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Cake,
+  PartyPopper,
 } from 'lucide-react';
 import {
   BarChart,
@@ -52,7 +56,29 @@ const pendingApprovals = [
 
 const OverviewPage = () => {
   const user = useAuthStore((state) => state.user);
+  const navigate = useNavigate();
   const currentDate = format(new Date(), 'eeee, MMMM dd, yyyy');
+  const [birthdays, setBirthdays] = useState({ students: [], staff: [], total: 0 });
+
+  useEffect(() => {
+    if (user && (user.role === 'student' || user.role === 'parent')) {
+      navigate('/dashboard/student', { replace: true });
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
+    const fetchBirthdays = async () => {
+      try {
+        const res = await api.get('/reports/birthdays');
+        if (res.data.success) {
+          setBirthdays(res.data.data);
+        }
+      } catch (err) {
+        // silently fail, not critical
+      }
+    };
+    fetchBirthdays();
+  }, []);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -238,6 +264,47 @@ const OverviewPage = () => {
           ))}
         </div>
       </div>
+
+      {/* Today's Birthdays Widget */}
+      {birthdays.total > 0 && (
+        <div className="bg-gradient-to-br from-amber-50 via-pink-50 to-purple-50 p-6 rounded-2xl border border-pink-200/60 shadow-sm animate-in fade-in duration-500">
+          <div className="flex items-center justify-between border-b border-pink-100 pb-4 mb-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-pink-100 rounded-xl">
+                <Cake className="h-5 w-5 text-pink-600" />
+              </div>
+              <h2 className="text-sm font-bold text-gray-900 tracking-wide">Today's Birthdays 🎂</h2>
+            </div>
+            <span className="px-3 py-1 text-[10px] font-bold bg-pink-100 text-pink-700 rounded-full">
+              {birthdays.total} Celebration{birthdays.total > 1 ? 's' : ''}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {birthdays.students.map((s) => (
+              <div key={s._id} className="flex items-center gap-3 bg-white/80 backdrop-blur-sm p-3 rounded-xl border border-pink-100/50 hover:shadow-md transition-all duration-200">
+                <div className="p-2 bg-gradient-to-br from-pink-400 to-rose-500 text-white rounded-full flex-shrink-0">
+                  <Cake className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-gray-800">{s.name}</div>
+                  <div className="text-[10px] text-gray-500 font-medium">{s.className} {s.section ? `- ${s.section}` : ''} · Student</div>
+                </div>
+              </div>
+            ))}
+            {birthdays.staff.map((s) => (
+              <div key={s._id} className="flex items-center gap-3 bg-white/80 backdrop-blur-sm p-3 rounded-xl border border-purple-100/50 hover:shadow-md transition-all duration-200">
+                <div className="p-2 bg-gradient-to-br from-purple-400 to-indigo-500 text-white rounded-full flex-shrink-0">
+                  <Cake className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-gray-800">{s.name}</div>
+                  <div className="text-[10px] text-gray-500 font-medium capitalize">{s.role?.replace(/_/g, ' ')} · Staff</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

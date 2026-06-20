@@ -7,6 +7,7 @@ const router = express.Router();
 
 router.get('/', protect, authorize('students', 'read'), studentController.getStudents);
 router.get('/:id', protect, authorize('students', 'read'), studentController.getStudentById);
+router.get('/:id/icard', protect, authorize('students', 'read'), studentController.generateStudentICardPdf);
 router.post('/', protect, authorize('students', 'write'), studentController.createStudent);
 router.put('/:id', protect, authorize('students', 'write'), studentController.updateStudent);
 router.delete('/:id', protect, authorize('students', 'delete'), studentController.deleteStudent);

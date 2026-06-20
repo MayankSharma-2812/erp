@@ -9,6 +9,10 @@ const router = express.Router();
 router.post('/attendance', protect, authorize('attendance', 'write'), hrController.markStaffAttendance);
 router.get('/attendance', protect, authorize('attendance', 'read'), hrController.getStaffAttendance);
 
+// --- SELF-SERVICE (any logged-in staff) ---
+router.get('/my-attendance', protect, hrController.getMyStaffAttendance);
+router.get('/my-leaves-summary', protect, hrController.getMyLeavesSummary);
+
 // --- LEAVES ---
 // Any logged in staff can apply for a leave request
 router.post('/leaves', protect, hrController.applyLeave);

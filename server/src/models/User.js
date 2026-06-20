@@ -40,6 +40,7 @@ const userSchema = new mongoose.Schema(
         'receptionist',
         'security_supervisor',
         'student',
+        'parent',
       ],
     },
     isActive: {
@@ -62,6 +63,9 @@ const userSchema = new mongoose.Schema(
         ref: 'Subject',
       },
     ],
+    dob: {
+      type: Date,
+    },
     deptAssigned: {
       type: String,
     },

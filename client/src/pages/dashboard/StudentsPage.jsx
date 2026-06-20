@@ -16,6 +16,8 @@ import {
   Trash2,
   Edit,
   Eye,
+  Download,
+  CreditCard,
 } from 'lucide-react';
 
 export default function StudentsPage() {
@@ -27,7 +29,10 @@ export default function StudentsPage() {
   // Search & Filters
   const [search, setSearch] = useState('');
   const [classFilter, setClassFilter] = useState('');
+  const [sectionFilter, setSectionFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('active');
+  const [genderFilter, setGenderFilter] = useState('');
+  const [boardingFilter, setBoardingFilter] = useState('');
 
   // Detail Drawer
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -39,7 +44,7 @@ export default function StudentsPage() {
 
   useEffect(() => {
     fetchStudents();
-  }, [search, classFilter, statusFilter]);
+  }, [search, classFilter, sectionFilter, statusFilter, genderFilter, boardingFilter]);
 
   const fetchClasses = async () => {
     try {
@@ -55,7 +60,7 @@ export default function StudentsPage() {
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`/students?classId=${classFilter}&status=${statusFilter}`);
+      const res = await axios.get(`/students?classId=${classFilter}&status=${statusFilter}&section=${sectionFilter}&gender=${genderFilter}&isBoarding=${boardingFilter}`);
       if (res.data.success) {
         // Filter client-side by search query if text entered
         let filtered = res.data.data;
@@ -89,6 +94,12 @@ export default function StudentsPage() {
     }
   };
 
+  const handleDownloadICard = (studentId, studentName) => {
+    const token = useAuthStore.getState().accessToken;
+    window.open(`/api/v1/students/${studentId}/icard?token=${token}`, '_blank');
+    toast.success('I-Card opened in new tab!');
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -114,12 +125,49 @@ export default function StudentsPage() {
           <select
             className="border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-indigo-600"
             value={classFilter}
-            onChange={e => setClassFilter(e.target.value)}
+            onChange={e => { setClassFilter(e.target.value); setSectionFilter(''); }}
           >
             <option value="">All Classes</option>
             {classes.map(c => (
               <option key={c._id} value={c._id}>{c.name}</option>
             ))}
+          </select>
+
+          {classFilter && (() => {
+            const cls = classes.find(c => c._id === classFilter);
+            return cls && cls.sections && cls.sections.length > 0 ? (
+              <select
+                className="border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-indigo-600"
+                value={sectionFilter}
+                onChange={e => setSectionFilter(e.target.value)}
+              >
+                <option value="">All Sections</option>
+                {cls.sections.map(sec => (
+                  <option key={sec} value={sec}>{sec}</option>
+                ))}
+              </select>
+            ) : null;
+          })()}
+
+          <select
+            className="border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-indigo-600"
+            value={genderFilter}
+            onChange={e => setGenderFilter(e.target.value)}
+          >
+            <option value="">All Genders</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+
+          <select
+            className="border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-indigo-600"
+            value={boardingFilter}
+            onChange={e => setBoardingFilter(e.target.value)}
+          >
+            <option value="">All Students</option>
+            <option value="true">Boarders</option>
+            <option value="false">Day Scholars</option>
           </select>
 
           <select
@@ -183,13 +231,22 @@ export default function StudentsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => { setSelectedStudent(student); setShowDrawer(true); }}
-                        className="p-1.5 hover:bg-gray-100 text-indigo-600 hover:text-indigo-800 rounded-lg transition"
-                        title="View Full Profile"
-                      >
-                        <Eye className="w-4.5 h-4.5" />
-                      </button>
+                      <div className="flex justify-end gap-1">
+                        <button
+                          onClick={() => { setSelectedStudent(student); setShowDrawer(true); }}
+                          className="p-1.5 hover:bg-gray-100 text-indigo-600 hover:text-indigo-800 rounded-lg transition"
+                          title="View Full Profile"
+                        >
+                          <Eye className="w-4.5 h-4.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDownloadICard(student._id, student.name)}
+                          className="p-1.5 hover:bg-gray-100 text-emerald-600 hover:text-emerald-800 rounded-lg transition"
+                          title="Download I-Card"
+                        >
+                          <CreditCard className="w-4.5 h-4.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -313,8 +370,14 @@ export default function StudentsPage() {
             {user.role === 'principal' && (
               <div className="p-6 border-t border-gray-100 bg-gray-50 flex gap-2">
                 <button
+                  onClick={() => handleDownloadICard(selectedStudent._id, selectedStudent.name)}
+                  className="flex-1 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition"
+                >
+                  <CreditCard className="w-4 h-4" /> Download I-Card
+                </button>
+                <button
                   onClick={() => handleDeleteStudent(selectedStudent._id)}
-                  className="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition"
+                  className="flex-1 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition"
                 >
                   <Trash2 className="w-4 h-4" /> Delete Profile
                 </button>

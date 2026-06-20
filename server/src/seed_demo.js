@@ -50,6 +50,10 @@ const runSeeder = async () => {
     await mongoose.connect(config.MONGO_URI);
     console.log('Connected.');
 
+    const systemToday = new Date();
+    const todayMonth = systemToday.getMonth();
+    const todayDay = systemToday.getDate();
+
     // Clear all collections
     const collections = [
       User, Student, Class, Subject, TimetableSlot, Admission, AttendanceRecord,
@@ -91,22 +95,22 @@ const runSeeder = async () => {
     // 3. Create Staff Users (Teachers & Admins)
     console.log('Seeding staff user accounts...');
     const staffData = [
-      { name: 'Dr. Rajesh Sharma', email: 'principal@vidyaerp.com', role: 'principal', isActive: true },
-      { name: 'Mrs. Shalini Sen', email: 'viceprincipal@vidyaerp.com', role: 'vice_principal', isActive: true },
-      { name: 'Mr. Anand Verma', email: 'coordinator@vidyaerp.com', role: 'academic_coordinator', isActive: true },
-      { name: 'Ms. Anita Verma', email: 'classteacher@vidyaerp.com', role: 'class_teacher', isActive: true, classAssigned: class11._id },
-      { name: 'Mr. Vikram Malhotra', email: 'teacher@vidyaerp.com', role: 'subject_teacher', isActive: true, subjectsAssigned: [subjects[3]._id, subjects[4]._id] },
-      { name: 'Mr. Rajiv Dixit', email: 'examcontroller@vidyaerp.com', role: 'exam_controller', isActive: true },
-      { name: 'Mr. Sanjay Mehta', email: 'accounts@vidyaerp.com', role: 'accounts_officer', isActive: true },
-      { name: 'Mr. Ramesh Kumar', email: 'cashier@vidyaerp.com', role: 'cashier', isActive: true },
-      { name: 'Mrs. Preeti Kapoor', email: 'hr@vidyaerp.com', role: 'hr_manager', isActive: true },
-      { name: 'Mr. Harish Rawat', email: 'warden@vidyaerp.com', role: 'hostel_warden', isActive: true },
-      { name: 'Mr. Amit Shah', email: 'asstwarden@vidyaerp.com', role: 'asst_hostel_warden', isActive: true },
-      { name: 'Dr. John Doe', email: 'medicalofficer@vidyaerp.com', role: 'medical_officer', isActive: true },
-      { name: 'Ms. Meenakshi Iyer', email: 'admissions@vidyaerp.com', role: 'admissions_officer', isActive: true },
-      { name: 'Mr. Gurpreet Singh', email: 'transport@vidyaerp.com', role: 'transport_manager', isActive: true },
-      { name: 'Mrs. Sudha Murthy', email: 'librarian@vidyaerp.com', role: 'librarian', isActive: true },
-      { name: 'Mr. Suresh Patel', email: 'itadmin@vidyaerp.com', role: 'it_admin', isActive: true },
+      { name: 'Dr. Rajesh Sharma', email: 'principal@vidyaerp.com', role: 'principal', isActive: true, dob: new Date(1975, 4, 12) },
+      { name: 'Mrs. Shalini Sen', email: 'viceprincipal@vidyaerp.com', role: 'vice_principal', isActive: true, dob: new Date(1978, 8, 22) },
+      { name: 'Mr. Anand Verma', email: 'coordinator@vidyaerp.com', role: 'academic_coordinator', isActive: true, dob: new Date(1982, 11, 5) },
+      { name: 'Ms. Anita Verma', email: 'classteacher@vidyaerp.com', role: 'class_teacher', isActive: true, classAssigned: class11._id, dob: new Date(1988, todayMonth, todayDay) }, // Today's birthday!
+      { name: 'Mr. Vikram Malhotra', email: 'teacher@vidyaerp.com', role: 'subject_teacher', isActive: true, subjectsAssigned: [subjects[3]._id, subjects[4]._id], dob: new Date(1985, 2, 15) },
+      { name: 'Mr. Rajiv Dixit', email: 'examcontroller@vidyaerp.com', role: 'exam_controller', isActive: true, dob: new Date(1980, 6, 30) },
+      { name: 'Mr. Sanjay Mehta', email: 'accounts@vidyaerp.com', role: 'accounts_officer', isActive: true, dob: new Date(1979, 10, 10) },
+      { name: 'Mr. Ramesh Kumar', email: 'cashier@vidyaerp.com', role: 'cashier', isActive: true, dob: new Date(1984, 1, 14) },
+      { name: 'Mrs. Preeti Kapoor', email: 'hr@vidyaerp.com', role: 'hr_manager', isActive: true, dob: new Date(1983, 7, 25) },
+      { name: 'Mr. Harish Rawat', email: 'warden@vidyaerp.com', role: 'hostel_warden', isActive: true, dob: new Date(1977, 3, 18) },
+      { name: 'Mr. Amit Shah', email: 'asstwarden@vidyaerp.com', role: 'asst_hostel_warden', isActive: true, dob: new Date(1990, 5, 20) },
+      { name: 'Dr. John Doe', email: 'medicalofficer@vidyaerp.com', role: 'medical_officer', isActive: true, dob: new Date(1974, 0, 1) },
+      { name: 'Ms. Meenakshi Iyer', email: 'admissions@vidyaerp.com', role: 'admissions_officer', isActive: true, dob: new Date(1986, 9, 8) },
+      { name: 'Mr. Gurpreet Singh', email: 'transport@vidyaerp.com', role: 'transport_manager', isActive: true, dob: new Date(1981, 5, 12) },
+      { name: 'Mrs. Sudha Murthy', email: 'librarian@vidyaerp.com', role: 'librarian', isActive: true, dob: new Date(1968, 8, 19) },
+      { name: 'Mr. Suresh Patel', email: 'itadmin@vidyaerp.com', role: 'it_admin', isActive: true, dob: new Date(1985, 11, 24) },
     ];
 
     const seededStaff = [];
@@ -181,7 +185,7 @@ const runSeeder = async () => {
         admissionNumber,
         rollNumber,
         name: s.name,
-        dob: new Date(2008 - (idx % 3), idx, 15),
+        dob: idx === 0 ? new Date(2010, todayMonth, todayDay) : new Date(2008 - (idx % 3), idx, 15), // Rohan Gupta birthday is today!
         gender: s.gender,
         class: s.classId,
         section: s.section,
@@ -201,6 +205,16 @@ const runSeeder = async () => {
         email: s.email,
         passwordHash,
         role: 'student',
+        studentProfile: stud._id,
+        isActive: true
+      });
+
+      // Create Parent User linked to child's studentProfile
+      await User.create({
+        name: stud.father.name,
+        email: stud.father.email,
+        passwordHash,
+        role: 'parent',
         studentProfile: stud._id,
         isActive: true
       });

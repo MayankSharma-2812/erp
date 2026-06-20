@@ -39,7 +39,7 @@ const LoginPage = () => {
       
       setAuth({ user, accessToken });
       toast.success(`Welcome back, ${user.name}!`);
-      if (user.role === 'student') {
+      if (user.role === 'student' || user.role === 'parent') {
         navigate('/dashboard/student');
       } else {
         navigate('/dashboard/overview');
@@ -184,6 +184,11 @@ const LoginPage = () => {
               </button>
             </div>
           </form>
+        </div>
+
+        {/* Branding Footer */}
+        <div className="text-center text-[10px] text-gray-400 font-medium tracking-widest uppercase mt-4">
+          designed and created by RankSchool Digital
         </div>
       </div>
     </div>

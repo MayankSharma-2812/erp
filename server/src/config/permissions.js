@@ -143,6 +143,18 @@ const permissions = {
     health: ['read'],
     reports: ['read'],
   },
+  parent: {
+    students: ['read'],
+    academics: ['read'],
+    attendance: ['read'],
+    exams: ['read'],
+    finance: ['read'],
+    hostel: ['read'],
+    library: ['read'],
+    transport: ['read'],
+    health: ['read'],
+    reports: ['read'],
+  },
 };
 
 module.exports = permissions;

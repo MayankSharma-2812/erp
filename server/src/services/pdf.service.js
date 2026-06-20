@@ -6,6 +6,19 @@ const generatePdfFromHtml = async (htmlContent, outputPath) => {
   const dir = path.dirname(outputPath);
   fs.mkdirSync(dir, { recursive: true });
 
+  // Inject branding watermark
+  const watermarkHtml = `
+    <div class="rankschool-watermark" style="position: fixed; bottom: 8px; right: 8px; font-size: 8px; color: rgba(156, 163, 175, 0.6); font-family: 'Inter', -apple-system, sans-serif; pointer-events: none; z-index: 9999; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">
+      designed and created by RankSchool Digital
+    </div>
+  `;
+  let processedHtml = htmlContent;
+  if (htmlContent.includes('</body>')) {
+    processedHtml = htmlContent.replace('</body>', `${watermarkHtml}</body>`);
+  } else {
+    processedHtml = htmlContent + watermarkHtml;
+  }
+
   try {
     if (process.env.DISABLE_PUPPETEER === 'true') {
       throw new Error('Puppeteer is disabled via env variable.');
@@ -17,7 +30,7 @@ const generatePdfFromHtml = async (htmlContent, outputPath) => {
     });
 
     const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+    await page.setContent(processedHtml, { waitUntil: 'networkidle0' });
     
     await page.pdf({
       path: outputPath,
@@ -39,10 +52,7 @@ const generatePdfFromHtml = async (htmlContent, outputPath) => {
     
     // Fallback: Write HTML file directly, so the user can still open/view/print it
     const htmlPath = outputPath.replace(/\.pdf$/, '.html');
-    fs.writeFileSync(htmlPath, htmlContent);
-    
-    // Also write a dummy PDF file so references don't crash
-    fs.writeFileSync(outputPath, 'Dummy PDF file (Puppeteer was not fully loaded or network blocked). Please view the sibling .html file.');
+    fs.writeFileSync(htmlPath, processedHtml);
     console.log(`✅ Fallback HTML written to: ${htmlPath}`);
     return false;
   }

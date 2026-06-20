@@ -10,7 +10,10 @@
   "scripts": {
     "dev:server": "pnpm --filter vidyaerp-server dev",
     "dev:client": "pnpm --filter vidyaerp-client dev",
-    "seed": "node server/src/seed.js"
+    "seed": "node server/src/seed.js",
+    "postbuild": "react-snap"
+  },"react-snap":{
+    "inlineCss":true
   },
   "engines": {
     "node": ">=20.0.0"

@@ -9,6 +9,15 @@ import OverviewPage from './pages/dashboard/OverviewPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import StudentsPage from './pages/dashboard/StudentsPage';
 import SettingsPage from './pages/dashboard/SettingsPage';
+import { useAuthStore } from './store/authStore';
+
+const DashboardIndex = () => {
+  const user = useAuthStore((state) => state.user);
+  if (user?.role === 'student' || user?.role === 'parent') {
+    return <Navigate to="/dashboard/student" replace />;
+  }
+  return <Navigate to="/dashboard/overview" replace />;
+};
 
 import AdmissionsPage from './pages/dashboard/AdmissionsPage';
 import AcademicsPage from './pages/dashboard/AcademicsPage';
@@ -25,6 +34,7 @@ import ReportsPage from './pages/dashboard/ReportsPage';
 import HostelPage from './pages/dashboard/HostelPage';
 import HrPage from './pages/dashboard/HrPage';
 import StudentPage from './pages/dashboard/StudentPage';
+import StaffPortalPage from './pages/dashboard/StaffPortalPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -69,9 +79,10 @@ function App() {
             <Route path="health" element={<HealthPage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="student" element={<StudentPage />} />
+            <Route path="staff-portal" element={<StaffPortalPage />} />
             <Route path="settings" element={<SettingsPage />} />
             
-            <Route index element={<Navigate to="overview" />} />
+            <Route index element={<DashboardIndex />} />
           </Route>
 
           <Route path="/" element={<Navigate to="/login" replace />} />

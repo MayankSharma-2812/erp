@@ -33,9 +33,67 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(false);
   const [loadingDetailed, setLoadingDetailed] = useState(false);
 
+  // States for blank sheet generator
+  const [classes, setClasses] = useState([]);
+  const [hostelBlocks, setHostelBlocks] = useState([]);
+  const [sheetType, setSheetType] = useState('class');
+  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedSection, setSelectedSection] = useState('');
+  const [selectedHostelBlock, setSelectedHostelBlock] = useState('');
+  const [generatingSheet, setGeneratingSheet] = useState(false);
+
   useEffect(() => {
     fetchSummary();
+    fetchMetadata();
   }, []);
+
+  const fetchMetadata = async () => {
+    try {
+      const [classesRes, blocksRes] = await Promise.all([
+        axios.get('/academics/classes'),
+        axios.get('/hostel/blocks')
+      ]);
+      if (classesRes.data && classesRes.data.success) {
+        setClasses(classesRes.data.data);
+        if (classesRes.data.data.length > 0) {
+          setSelectedClass(classesRes.data.data[0]._id);
+        }
+      }
+      if (blocksRes.data && blocksRes.data.success) {
+        setHostelBlocks(blocksRes.data.data);
+        if (blocksRes.data.data.length > 0) {
+          setSelectedHostelBlock(blocksRes.data.data[0]._id);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load classes or hostel blocks metadata', e);
+    }
+  };
+
+  const handleGenerateBlankSheet = () => {
+    if (sheetType === 'class' && !selectedClass) {
+      toast.error('Please select a class');
+      return;
+    }
+    if (sheetType === 'hostel' && !selectedHostelBlock) {
+      toast.error('Please select a hostel block');
+      return;
+    }
+
+    let url = `/reports/blank-sheet?type=${sheetType}`;
+    if (sheetType === 'class') {
+      url += `&classId=${selectedClass}`;
+      if (selectedSection) {
+        url += `&section=${selectedSection}`;
+      }
+    } else {
+      url += `&hostelBlockId=${selectedHostelBlock}`;
+    }
+
+    const token = useAuthStore.getState().accessToken;
+    window.open(`/api/v1${url}&token=${token}`, '_blank');
+    toast.success('Roster sheet generation started in new tab');
+  };
 
   useEffect(() => {
     fetchDetailedReport();
@@ -206,6 +264,98 @@ export default function ReportsPage() {
           </div>
         </div>
       )}
+
+      {/* Blank Registration Sheets Generator */}
+      <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+        <h3 className="font-bold text-gray-900 flex items-center gap-2">
+          <FileText className="w-5 h-5 text-indigo-650" /> Blank Register Sheets (PDF Printouts)
+        </h3>
+        <p className="text-xs text-gray-500">
+          Generate empty printout register sheets for manual attendance marking, class rosters, or hostel room logs.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1.5">Sheet Type</label>
+            <select
+              value={sheetType}
+              onChange={(e) => setSheetType(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs outline-none bg-white font-semibold text-gray-750"
+            >
+              <option value="class">Class-wise Roster</option>
+              <option value="hostel">Hostel Block-wise Roster</option>
+            </select>
+          </div>
+
+          {sheetType === 'class' ? (
+            <>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Class</label>
+                <select
+                  value={selectedClass}
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs outline-none bg-white font-semibold text-gray-750"
+                >
+                  <option value="">Select Class</option>
+                  {classes.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Section (Optional)</label>
+                <select
+                  value={selectedSection}
+                  onChange={(e) => setSelectedSection(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs outline-none bg-white font-semibold text-gray-750"
+                >
+                  <option value="">All Sections</option>
+                  <option value="A">Section A</option>
+                  <option value="B">Section B</option>
+                  <option value="C">Section C</option>
+                </select>
+              </div>
+            </>
+          ) : (
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Hostel Block</label>
+              <select
+                value={selectedHostelBlock}
+                onChange={(e) => setSelectedHostelBlock(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs outline-none bg-white font-semibold text-gray-750"
+              >
+                <option value="">Select Hostel Block</option>
+                {hostelBlocks.map((hb) => (
+                  <option key={hb._id} value={hb._id}>
+                    {hb.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div>
+            <button
+              onClick={handleGenerateBlankSheet}
+              disabled={generatingSheet}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold py-2 px-4 rounded-lg text-xs flex items-center justify-center gap-1.5 transition-colors"
+            >
+              {generatingSheet ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Generating...
+                </>
+              ) : (
+                <>
+                  <Download className="w-3.5 h-3.5" /> Generate & Download PDF
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Detailed Reports Grid */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">

@@ -15,8 +15,10 @@ export const navigationItems = [
   { key: 'transport', label: 'Transport', icon: 'Bus', path: '/dashboard/transport', roles: ['principal', 'vice_principal', 'transport_manager'] },
   { key: 'health', label: 'Health', icon: 'HeartPulse', path: '/dashboard/health', roles: ['principal', 'vice_principal', 'medical_officer'] },
   { key: 'reports', label: 'Reports', icon: 'BarChart3', path: '/dashboard/reports', roles: ['principal', 'vice_principal', 'academic_coordinator', 'exam_controller', 'accounts_officer', 'hr_manager', 'hostel_warden', 'medical_officer', 'admissions_officer', 'transport_manager', 'librarian', 'it_admin', 'class_teacher'] },
+  { key: 'staff-portal', label: 'Staff Portal', icon: 'Briefcase', path: '/dashboard/staff-portal', roles: ['principal', 'vice_principal', 'academic_coordinator', 'class_teacher', 'subject_teacher', 'exam_controller', 'accounts_officer', 'cashier', 'hr_manager', 'hostel_warden', 'asst_hostel_warden', 'medical_officer', 'admissions_officer', 'transport_manager', 'librarian', 'it_admin', 'receptionist', 'security_supervisor'] },
   { key: 'settings', label: 'Settings', icon: 'Settings', path: '/dashboard/settings', roles: ['principal', 'vice_principal', 'it_admin'] },
   { key: 'student-portal', label: 'Student Portal', icon: 'User', path: '/dashboard/student', roles: ['student'] },
+  { key: 'parent-portal', label: 'Parent Portal', icon: 'Users', path: '/dashboard/student', roles: ['parent'] },
 ];
 
 export const moduleColors = {

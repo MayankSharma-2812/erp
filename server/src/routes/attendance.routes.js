@@ -9,5 +9,6 @@ router.post('/', protect, authorize('attendance', 'write'), attendanceController
 router.get('/', protect, authorize('attendance', 'read'), attendanceController.getAttendance);
 router.get('/stats', protect, authorize('attendance', 'read'), attendanceController.getStats);
 router.get('/consecutive-absences', protect, authorize('attendance', 'read'), attendanceController.getConsecutiveAbsences);
+router.get('/my-attendance', protect, attendanceController.getMyStudentAttendance);
 
 module.exports = router;

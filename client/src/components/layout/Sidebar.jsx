@@ -108,6 +108,12 @@ const Sidebar = ({ collapsed, toggleCollapse, mobileOpen, closeMobile }) => {
           <Icons.LogOut className="h-5 w-5 flex-shrink-0" />
           {showFullMenu && <span>Log Out</span>}
         </button>
+
+        {showFullMenu && (
+          <div className="pt-2 text-center text-[8px] text-gray-400 font-semibold tracking-wider uppercase pointer-events-none select-none leading-normal">
+            designed & created by<br/>RankSchool Digital
+          </div>
+        )}
       </div>
     </aside>
   );

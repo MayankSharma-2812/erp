@@ -643,6 +643,109 @@ const getPayslipById = async (req, res, next) => {
   }
 };
 
+const getMyStaffAttendance = async (req, res, next) => {
+  try {
+    const { month } = req.query;
+    const query = { staff: req.user.id };
+
+    if (month) {
+      const start = new Date(`${month}-01T00:00:00.000Z`);
+      const end = new Date(start);
+      end.setUTCMonth(end.getUTCMonth() + 1);
+      query.date = { $gte: start, $lt: end };
+    } else {
+      // Default: last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      query.date = { $gte: thirtyDaysAgo };
+    }
+
+    const records = await StaffAttendance.find(query).sort({ date: -1 });
+
+    let present = 0, absent = 0, halfDay = 0, onLeave = 0, holiday = 0;
+    records.forEach(r => {
+      if (r.status === 'present') present++;
+      else if (r.status === 'absent') absent++;
+      else if (r.status === 'half_day') halfDay++;
+      else if (r.status === 'on_leave') onLeave++;
+      else if (r.status === 'holiday') holiday++;
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        stats: { total: records.length, present, absent, halfDay, onLeave, holiday },
+        records: records.map(r => ({ date: r.date, status: r.status, inTime: r.inTime, outTime: r.outTime })),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const LEAVE_QUOTAS = {
+  CL: 12,
+  EL: 15,
+  ML: 10,
+  LOP: 999,
+  OD: 5,
+  special: 3,
+};
+
+const getMyLeavesSummary = async (req, res, next) => {
+  try {
+    const leaves = await Leave.find({ staff: req.user.id })
+      .populate('approvedBy', 'name role')
+      .sort({ createdAt: -1 });
+
+    // Calculate taken counts by type (approved only)
+    const takenByType = {};
+    const pendingByType = {};
+    Object.keys(LEAVE_QUOTAS).forEach(t => {
+      takenByType[t] = 0;
+      pendingByType[t] = 0;
+    });
+
+    leaves.forEach(l => {
+      if (l.status === 'approved') {
+        takenByType[l.type] = (takenByType[l.type] || 0) + l.days;
+      } else if (l.status === 'pending') {
+        pendingByType[l.type] = (pendingByType[l.type] || 0) + l.days;
+      }
+    });
+
+    const balances = {};
+    Object.keys(LEAVE_QUOTAS).forEach(t => {
+      balances[t] = {
+        provided: LEAVE_QUOTAS[t],
+        taken: takenByType[t],
+        pending: pendingByType[t],
+        remaining: Math.max(0, LEAVE_QUOTAS[t] - takenByType[t]),
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        balances,
+        requests: leaves.map(l => ({
+          _id: l._id,
+          type: l.type,
+          fromDate: l.fromDate,
+          toDate: l.toDate,
+          days: l.days,
+          reason: l.reason,
+          status: l.status,
+          approvedBy: l.approvedBy,
+          appliedAt: l.appliedAt,
+        })),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   markStaffAttendance,
   getStaffAttendance,
@@ -658,4 +761,6 @@ module.exports = {
   disbursePayrollRun,
   getPayslips,
   getPayslipById,
+  getMyStaffAttendance,
+  getMyLeavesSummary,
 };

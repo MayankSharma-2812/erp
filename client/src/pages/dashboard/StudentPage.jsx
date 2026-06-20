@@ -16,6 +16,7 @@ import {
   ChevronRight,
   ClipboardCheck,
   CheckCircle,
+  Download,
 } from 'lucide-react';
 
 export default function StudentPage() {
@@ -29,6 +30,7 @@ export default function StudentPage() {
   const [outings, setOutings] = useState([]);
   const [clinicVisits, setClinicVisits] = useState([]);
   const [syllabus, setSyllabus] = useState([]);
+  const [attendanceData, setAttendanceData] = useState({ stats: null, records: [] });
   const [messMenu, setMessMenu] = useState({});
   
   // loading
@@ -64,6 +66,27 @@ export default function StudentPage() {
       setLoading(false);
     }
   }, [user]);
+
+  // Fetch attendance when attendance tab is active
+  useEffect(() => {
+    if (activeTab === 'attendance' && user?.studentProfile) {
+      fetchAttendanceData();
+    }
+  }, [activeTab]);
+
+  const fetchAttendanceData = async () => {
+    try {
+      const res = await axios.get('/attendance/my-attendance');
+      if (res.data.success) {
+        setAttendanceData({
+          stats: res.data.data.stats,
+          records: res.data.data.records || [],
+        });
+      }
+    } catch (err) {
+      toast.error('Failed to load attendance data');
+    }
+  };
 
   const fetchStudentData = async () => {
     setLoading(true);
@@ -123,6 +146,12 @@ export default function StudentPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDownloadICard = () => {
+    const token = useAuthStore.getState().accessToken;
+    window.open(`/api/v1/students/${user.studentProfile}/icard?token=${token}`, '_blank');
+    toast.success('I-Card opened in new tab!');
   };
 
   const handleApplyOuting = async (e) => {
@@ -256,10 +285,14 @@ export default function StudentPage() {
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="p-6 bg-gradient-to-r from-pink-500 to-rose-500 rounded-3xl text-white shadow-md flex justify-between items-center">
+      <div className={`p-6 bg-gradient-to-r ${user.role === 'parent' ? 'from-emerald-500 to-teal-500' : 'from-pink-500 to-rose-500'} rounded-3xl text-white shadow-md flex justify-between items-center`}>
         <div className="space-y-1">
-          <h1 className="text-3xl font-extrabold tracking-tight font-sans">Hello, {student?.name}!</h1>
-          <p className="opacity-90 text-sm">Welcome to your VidyaERP student dashboard portal.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight font-sans">
+            {user.role === 'parent' ? `Hello, Parent of ${student?.name}!` : `Hello, ${student?.name}!`}
+          </h1>
+          <p className="opacity-90 text-sm">
+            {user.role === 'parent' ? 'Welcome to your VidyaERP parent portal.' : 'Welcome to your VidyaERP student dashboard portal.'}
+          </p>
         </div>
         <div className="p-3 bg-white/20 rounded-full">
           <GraduationCap className="w-10 h-10" />
@@ -273,20 +306,24 @@ export default function StudentPage() {
           { key: 'fees', label: 'Fees & Payments', icon: IndianRupee },
           { key: 'timetable', label: 'Weekly Timetable', icon: Calendar },
           { key: 'hostel', label: 'Hostel & Outings', icon: Building2 },
+          { key: 'attendance', label: 'Attendance', icon: ClipboardCheck },
           { key: 'health', label: 'Medical History', icon: HeartPulse },
-        ].map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-2 pb-3 text-sm font-semibold border-b-2 transition whitespace-nowrap ${
-              activeTab === tab.key
-                ? 'border-pink-500 text-pink-600'
-                : 'border-transparent text-gray-500 hover:text-gray-800'
-            }`}
-          >
-            <tab.icon className="w-4 h-4" /> {tab.label}
-          </button>
-        ))}
+        ].map(tab => {
+          const activeColor = user.role === 'parent' ? 'border-emerald-500 text-emerald-600' : 'border-pink-500 text-pink-600';
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex items-center gap-2 pb-3 text-sm font-semibold border-b-2 transition whitespace-nowrap ${
+                activeTab === tab.key
+                  ? activeColor
+                  : 'border-transparent text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              <tab.icon className="w-4 h-4" /> {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* TABS CONTENT */}
@@ -306,6 +343,12 @@ export default function StudentPage() {
               <div className="flex justify-between"><span className="text-gray-400">Session Year:</span> <span className="font-semibold">{student?.session}</span></div>
               <div className="flex justify-between"><span className="text-gray-400">Boarding Resident:</span> <span className={`px-2 py-0.5 rounded text-xs font-bold ${student?.isBoarding ? 'bg-teal-50 text-teal-700' : 'bg-gray-100 text-gray-500'}`}>{student?.isBoarding ? 'Yes' : 'No'}</span></div>
             </div>
+            <button
+              onClick={handleDownloadICard}
+              className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 bg-pink-50 hover:bg-pink-100 text-pink-600 rounded-xl text-sm font-bold transition border border-pink-200"
+            >
+              <Download className="w-4 h-4" /> Download Identity Card
+            </button>
           </div>
 
           {/* Fees Stats */}
@@ -629,6 +672,62 @@ export default function StudentPage() {
               ))}
               {clinicVisits.length === 0 && (
                 <div className="text-sm text-gray-400 py-12 text-center">No clinic visit records found.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ATTENDANCE */}
+      {activeTab === 'attendance' && (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          {/* Stat Cards */}
+          {attendanceData.stats && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+              {[
+                { label: 'Attendance Rate', value: `${attendanceData.stats.attendanceRate ?? 0}%`, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+                { label: 'Present Days', value: attendanceData.stats.present ?? 0, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200' },
+                { label: 'Absent Days', value: attendanceData.stats.absent ?? 0, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
+                { label: 'Late Days', value: attendanceData.stats.late ?? 0, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
+                { label: 'Leave Days', value: attendanceData.stats.leave ?? 0, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
+              ].map(stat => (
+                <div key={stat.label} className={`${stat.bg} border ${stat.border} rounded-2xl p-5 text-center space-y-1`}>
+                  <div className={`text-2xl font-extrabold ${stat.color}`}>{stat.value}</div>
+                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Recent Attendance Records */}
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
+            <h3 className="text-lg font-bold text-gray-800 border-b pb-2 flex items-center gap-2">
+              <ClipboardCheck className="w-5 h-5 text-pink-500" /> Recent Attendance (Last 90 Days)
+            </h3>
+            <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+              {attendanceData.records.length > 0 ? (
+                attendanceData.records.slice(0, 90).map((record, idx) => {
+                  const statusColors = {
+                    present: 'bg-green-50 text-green-700 border-green-200',
+                    absent: 'bg-red-50 text-red-700 border-red-200',
+                    late: 'bg-amber-50 text-amber-700 border-amber-200',
+                    leave: 'bg-blue-50 text-blue-700 border-blue-200',
+                    holiday: 'bg-purple-50 text-purple-700 border-purple-200',
+                  };
+                  const colorClass = statusColors[record.status] || 'bg-gray-50 text-gray-600 border-gray-200';
+                  return (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                      <span className="text-sm font-semibold text-gray-700">
+                        {new Date(record.date).toLocaleDateString('en-IN', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+                      </span>
+                      <span className={`px-3 py-0.5 rounded-full text-xs font-bold uppercase border ${colorClass}`}>
+                        {record.status}
+                      </span>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-sm text-gray-400 py-12 text-center">No attendance records found.</div>
               )}
             </div>
           </div>
